@@ -6,10 +6,6 @@ from cone import ConePipe
 from cube import CubePipe
 from cscore import CameraServer, UsbCamera, VideoSource
 
-CameraServer.enableLogging()
-camera = CameraServer.startAutomaticCapture()
-camera.setResolution(600, 480)
-
 table = NetworkTables.getTable("/vision")
 
 def processConeInfo():
@@ -68,6 +64,7 @@ def main():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     CameraServer.enableLogging()
+    global camera
     camera = CameraServer.startAutomaticCapture()
     camera.setResolution(600, 480)
     NetworkTables.initialize(server="10.20.73.2")
