@@ -20,16 +20,16 @@ class CubePipe:
         self.cv_resize_output = None
 
         self.__hsv_threshold_input = self.cv_resize_output
-        self.__hsv_threshold_hue = [113.1402749790996, 180.0]
-        self.__hsv_threshold_saturation = [0.0, 255.0]
-        self.__hsv_threshold_value = [171.7478835581332, 254.76047348619062]
+        self.__hsv_threshold_hue = [118.22502074181146, 180.0]
+        self.__hsv_threshold_saturation = [60.028248587570616, 255.0]
+        self.__hsv_threshold_value = [87.41893470617885, 249.9083392836389]
 
         self.hsv_threshold_output = None
 
         self.__cv_erode_src = self.hsv_threshold_output
         self.__cv_erode_kernel = None
         self.__cv_erode_anchor = (-1, -1)
-        self.__cv_erode_iterations = 2.0
+        self.__cv_erode_iterations = 3.0
         self.__cv_erode_bordertype = cv2.BORDER_REFLECT
         self.__cv_erode_bordervalue = (-1)
 
@@ -40,12 +40,10 @@ class CubePipe:
 
         self.mask_output = None
 
-        self.__find_blobs_input = self.mask_output
-        self.__find_blobs_min_area = 90.0
-        self.__find_blobs_circularity = [0.0, 1.0]
-        self.__find_blobs_dark_blobs = True
+        self.__find_contours_input = self.cv_erode_output
+        self.__find_contours_external_only = False
 
-        self.find_blobs_output = None
+        self.find_contours_output = None
 
 
     def process(self, source0):
@@ -69,9 +67,9 @@ class CubePipe:
         self.__mask_mask = self.cv_erode_output
         (self.mask_output) = self.__mask(self.__mask_input, self.__mask_mask)
 
-        # Step Find_Blobs0:
-        self.__find_blobs_input = self.mask_output
-        (self.find_blobs_output) = self.__find_blobs(self.__find_blobs_input, self.__find_blobs_min_area, self.__find_blobs_circularity, self.__find_blobs_dark_blobs)
+        # Step Find_Contours0:
+        self.__find_contours_input = self.cv_erode_output
+        (self.find_contours_output) = self.__find_contours(self.__find_contours_input, self.__find_contours_external_only)
 
 
     @staticmethod
@@ -129,30 +127,21 @@ class CubePipe:
         return cv2.bitwise_and(input, input, mask=mask)
 
     @staticmethod
-    def __find_blobs(input, min_area, circularity, dark_blobs):
-        """Detects groups of pixels in an image.
+    def __find_contours(input, external_only):
+        """Sets the values of pixels in a binary image to their distance to the nearest black pixel.
         Args:
             input: A numpy.ndarray.
-            min_area: The minimum blob size to be found.
-            circularity: The min and max circularity as a list of two numbers.
-            dark_blobs: A boolean. If true looks for black. Otherwise it looks for white.
-        Returns:
-            A list of KeyPoint.
+            external_only: A boolean. If true only external contours are found.
+        Return:
+            A list of numpy.ndarray where each one represents a contour.
         """
-        params = cv2.SimpleBlobDetector_Params()
-        params.filterByColor = 1
-        params.blobColor = (0 if dark_blobs else 255)
-        params.minThreshold = 10
-        params.maxThreshold = 220
-        params.filterByArea = True
-        params.minArea = min_area
-        params.filterByCircularity = True
-        params.minCircularity = circularity[0]
-        params.maxCircularity = circularity[1]
-        params.filterByConvexity = False
-        params.filterByInertia = False
-        detector = cv2.SimpleBlobDetector_create(params)
-        return detector.detect(input)
+        if(external_only):
+            mode = cv2.RETR_EXTERNAL
+        else:
+            mode = cv2.RETR_LIST
+        method = cv2.CHAIN_APPROX_SIMPLE
+        im2, contours, hierarchy =cv2.findContours(input, mode=mode, method=method)
+        return contours
 
 
 
